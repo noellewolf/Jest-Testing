@@ -1,4 +1,6 @@
 import CurrencyComparison from './currency_comparison';
+import fetchData from './utils/fetch-data.js'
+jest.mock('./utils/fetch-data');
 
 // Task 10: Import and mock fetchData
 
@@ -27,12 +29,16 @@ it("returns exchange rate for USD rounded to 2 decimal points", () => {
 // Task 5: Create a test for testSalary.hourlyPayUSD below
 it("Returns hourly pay in USD from rate", () => {
   // arrange
-  
+  const rateCAD = 1.21
+  const hourlyPayInCAD = testSalary.hourlyPayUSD(rateCAD)
+  const expectedHourlyPay = 20.66
+  //assert
+  expect(hourlyPayInCAD).toBe(expectedHourlyPay)
 })
 
 
 // Task 6: Complete this test!
-it("Respond with different salaries based on currency", () => {
+it("Respond with different salaries based on currency", (done) => {
   //arrange
   const currency = "CAD"
   const exchangeRate = 1.21
@@ -43,8 +49,14 @@ it("Respond with different salaries based on currency", () => {
   }
 
   //act
-  testSalary.response(currency, exchangeRate, (result) => {
+  testSalary.response(currency, exchangeRate, result => {
     //assert
+    try {
+          expect(result).toEqual(expectedValue)
+          done()
+    } catch (error) {
+      done(error)
+    }
   })
 })
 
@@ -64,7 +76,7 @@ it("Receives current currency exchange data", async ()=>{
   const expectedValue = [{"CCD": 50}, "Mock"];
 
   // Mock the resolved value of fetchData
-
+  fetchData.mockResolvedValueOnce(mockResponse);
   
   //act
   const actualValue = await testSalary.fetchCurrentExchange() 
