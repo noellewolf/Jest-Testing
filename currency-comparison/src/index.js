@@ -1,17 +1,41 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+require("@babel/core");
+require("@babel/register");
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const readline = require("readline");
+const CurrencyComparison = require("./currency_comparison").default
+const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+const responseText = (hourlyPay, currency) => {
+  console.log(`Your hourly pay in USD would change from $${hourlyPay.USD}/hr to $${hourlyPay[currency]}/hr if you were paid ${hourlyPay.salary} ${currency} instead of ${hourlyPay.salary} USD`);
+}
+
+rl.question("Enter a yearly salary in USD: ", function(salary){
+    if (isNaN(salary)) {
+        console.log('Please try again with only enter in numeric characters.')
+        rl.close()
+    }  
+    const curSalary = new CurrencyComparison(salary)
+    rl.question("Enter a three-letter ISO currency code (MXN, EUR, or CAD) to compare your hourly pay in a different currency: ", async function(currency) {
+        const cur = currency.toUpperCase()
+        try {
+            const rates = await curSalary.fetchCurrentExchange()
+            if (!Object.keys(rates[0]).includes(cur) && cur !== 'EUR') {
+                console.log("Sorry, but it doesn't seem that we have currency exchange info for that currency.")
+                rl.close()
+            }
+            const exchangeRate = curSalary.currencyConversion(rates[0], cur)
+            curSalary.response(cur, exchangeRate, responseText)
+                rl.close()
+        } catch (error) {
+            console.log(error);
+            rl.close()
+        }
+    })
+});
+
+rl.on("close", () => {
+    process.exit(0)
+})
